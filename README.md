@@ -1,9 +1,9 @@
-### Local AI Agent
+# Local AI Agent
 
-# Overview
+## Overview
 Create your own local AI agent to help you while your Claude is out of tokens. Trust me, I already undergo this situation, keep watching youtube for 5 hours straight
 
-# Setup 
+## Setup 
 
 ``` 
 git clone
@@ -16,4 +16,4 @@ python -m venv (your venv name)
 
 ```
 
-# Theory =
+## Theory 
