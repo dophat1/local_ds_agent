@@ -4,8 +4,12 @@ from io import StringIO
 import duckdb
 
 def read_csv(file_path):
-    df = pd.read_csv(file_path)
-    return df.to_string()
+    try:
+        df = pd.read_csv(file_path)
+        return df.to_string()
+    except FileNotFoundError:
+        return f"The {file_path} is invalid, check it again."    
+
 
 """
 1. Save real terminal → old_out
@@ -16,16 +20,26 @@ def read_csv(file_path):
 """
 
 def python_runner(code):
-    old_out = sys.stdout
-    output = sys.stdout = StringIO()
-    exec(code)
-    sys.stdout = old_out
-    return output.getvalue()
+    try:
+        old_out = sys.stdout
+        output = sys.stdout = StringIO()
+        exec(code)
+        return output.getvalue()
 
+    
+    except Exception as e: 
+        return f"There is {e} in the code, check again."
+    
+    finally:
+        sys.stdout = old_out
+        
 
 def sql_query(query):
-    result = duckdb.sql(query)
-    return str(result)
+    try:
+        result = duckdb.sql(query)
+        return str(result)
+    except Exception as e:
+        return f"There is {e} when trying to query the data, check again."
 
 """
 The agent loop receives this JSON from the LLM:

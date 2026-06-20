@@ -33,11 +33,22 @@ messages.append(
 )
 
 user_prompt = input("How can I help you ?")
+
+user_file_path = input("Provide me the file path of your data.")
+
 message = {
     'role':'user', 
     'content': user_prompt
 }
 messages.append(message)
+
+file_path = {
+    'role':'user', 
+    'content': user_file_path
+}
+messages.append(file_path)
+
+
 
 while True:
     llm_output = call_llm(messages)
@@ -67,5 +78,5 @@ while True:
                 'role':'user',
                 'content':f"You have called the wrong in {tool_name}, there are only the following tools that you can call {tools.keys()}"
 
-            }
+            } 
         )
