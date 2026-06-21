@@ -1,6 +1,7 @@
 import json
 from llm import call_llm
 from tools import tools
+import os
 
 SYSTEM_PROMPT = """
 You are an expert Data Scientist. Your goal is to analyze data and answer the user's questions accurately using your available tools.
@@ -12,12 +13,17 @@ You are an expert Data Scientist. Your goal is to analyze data and answer the us
 
 ### INTERACTION PROTOCOL
 
-#### Phase 1: Tool Execution (Structured JSON)
-Whenever you need to invoke a tool, you MUST respond strictly with a JSON object. Do not include any conversational filler, markdown formatting outside the JSON, or thoughts. Use the following exact schema:
-{
-    "tool": "tool_name",
-    "input": "exact input arguments or queries required for the tool"
-}
+Whenever you need to invoke a tool, respond with ONLY a single raw JSON object — 
+no prose before or after it, no markdown fences, no explanations.
+
+The "input" field must be valid JSON: encode multi-line code as a single string 
+with \\n for newlines (NOT Python triple-quoted strings).
+
+Example of a correctly formatted response:
+{"tool": "python_runner", "input": "fibonacci = [0, 1]\\nfor i in range(2, 8):\\n    fibonacci.append(fibonacci[-1] + fibonacci[-2])\\nprint(fibonacci[7])"}
+
+If you want to explain your reasoning, do it BEFORE deciding to call a tool, 
+in a separate turn — never mix prose and JSON in the same response.
 
 #### Phase 2: Final Answer (Plain Text)
 Once you have collected enough information from the tool outputs to comprehensively answer the user's question, you must transition out of JSON mode. Respond in clear, professional plain text with your final analysis and answer. Do not use the JSON format for your final response.
@@ -46,11 +52,16 @@ file_path = {
     'role':'user', 
     'content': user_file_path
 }
-messages.append(file_path)
+
+
+# Only check if user's input is non empty, read_csv do the rest.
+if user_file_path:
+    messages.append(file_path)
 
 
 
 while True:
+
     llm_output = call_llm(messages)
     messages.append(
         {
@@ -58,20 +69,30 @@ while True:
             'content':llm_output
         }
     )
+
+    # Clean the llm output before feed in
+    cleaned_output = llm_output.replace('```json', '').replace('```', '')
+
     try:
-        parsed = json.loads(llm_output)
-        tool_name = parsed['tool']
-        tool_function = tools[tool_name]
-        result = tool_function(parsed['input'])
-        messages.append(
-            {
-                'role':'user',
-                'content': result
-            }
-        )
+        parsed = json.loads(cleaned_output)
+        if isinstance(parsed, dict):
+            tool_name = parsed['tool']
+            tool_function = tools[tool_name]
+            result = tool_function(parsed['input'])
+            messages.append(
+                {
+                    'role':'user',
+                    'content': result
+                }
+            )
+        else:
+            print(cleaned_output)
+            break
+
     except json.JSONDecodeError:
-        print(llm_output)
+        print(cleaned_output)
         break
+
     except KeyError:
         messages.append(
             {

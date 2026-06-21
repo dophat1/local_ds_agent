@@ -14,5 +14,5 @@ messages=[
 ]
 
 def call_llm(messages):
-    response: ChatResponse = chat(model='qwen2.5-coder:14b', messages=messages)
+    response: ChatResponse = chat(model='qwen2.5-coder:7b', messages=messages)
     return response['message']['content']

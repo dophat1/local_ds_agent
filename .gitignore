@@ -1,3 +1,8 @@
 /__pycache__
+
 /agent_venv
+
 *.csv
+
+*.md 
+!README.md
